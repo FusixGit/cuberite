@@ -233,20 +233,21 @@ public:
 		UNUSED(a_WorldInterface);
 
 		// Vine cannot grow down if at the bottom:
-		if (a_RelPos.y < 1)
+		auto growPos = a_RelPos.addedY(-1);
+		if (!cChunkDef::IsValidHeight(growPos.y))
 		{
 			return;
 		}
 
 		// Grow one block down, if possible:
 		BLOCKTYPE Block;
-		a_Chunk.UnboundedRelGetBlockType(a_RelPos.addedY(-1), Block);
+		a_Chunk.UnboundedRelGetBlockType(growPos, Block);
 		if (Block == E_BLOCK_AIR)
 		{
-			auto worldPos = a_Chunk.RelativeToAbsolute(a_RelPos.addedY(-1));
+			auto worldPos = a_Chunk.RelativeToAbsolute(growPos);
 			if (!a_PluginInterface.CallHookBlockSpread(worldPos.x, worldPos.y, worldPos.z, ssVineSpread))
 			{
-				a_Chunk.UnboundedRelSetBlock(a_RelPos.addedY(-1), E_BLOCK_VINES, a_Chunk.GetMeta(a_RelPos));
+				a_Chunk.UnboundedRelSetBlock(growPos, E_BLOCK_VINES, a_Chunk.GetMeta(a_RelPos));
 			}
 		}
 	}

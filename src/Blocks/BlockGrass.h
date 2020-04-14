@@ -52,11 +52,12 @@ public:
 			a_Chunk.GetWorld()->QueueLightChunk(a_Chunk.GetPosX(), a_Chunk.GetPosZ());
 			return;
 		}
-		if (cChunkDef::IsValidHeight(a_RelPos.y + 1))
+		auto abovePos = a_RelPos.addedY(1);
+		if (cChunkDef::IsValidHeight(abovePos.y))
 		{
 			// Grass turns back to dirt when the block above it is not transparent or water.
 			// It does not turn to dirt when a snow layer is above.
-			auto above = a_Chunk.GetBlock(a_RelPos.addedY(1));
+			auto above = a_Chunk.GetBlock(abovePos);
 			if (
 				(above != E_BLOCK_SNOW) &&
 				(!cBlockInfo::IsTransparent(above) || IsBlockWater(above)))
@@ -66,7 +67,7 @@ public:
 			}
 
 			// Make sure that there is enough light at the source block to spread
-			auto light = std::max(a_Chunk.GetBlockLight(a_RelPos.addedY(1)), a_Chunk.GetTimeAlteredLight(a_Chunk.GetSkyLight(a_RelPos.addedY(1))));
+			auto light = std::max(a_Chunk.GetBlockLight(abovePos), a_Chunk.GetTimeAlteredLight(a_Chunk.GetSkyLight(abovePos)));
 			if (light < 9)
 			{
 				return;
@@ -83,12 +84,12 @@ public:
 
 			BLOCKTYPE  DestBlock;
 			NIBBLETYPE DestMeta;
-			if (!cChunkDef::IsValidHeight(a_RelPos.y + OfsY))
+			auto pos = a_RelPos + Vector3i(OfsX, OfsY, OfsZ);
+			if (!cChunkDef::IsValidHeight(pos.y))
 			{
 				// Y Coord out of range
 				continue;
 			}
-			auto pos = a_RelPos + Vector3i(OfsX, OfsY, OfsZ);
 			auto chunk = a_Chunk.GetRelNeighborChunkAdjustCoords(pos);
 			if (chunk == nullptr)
 			{
@@ -101,7 +102,6 @@ public:
 				// Not a regular dirt block
 				continue;
 			}
-			auto abovePos = pos.addedY(1);
 			BLOCKTYPE above = chunk->GetBlock(abovePos);
 			NIBBLETYPE light = std::max(chunk->GetBlockLight(abovePos), chunk->GetTimeAlteredLight(chunk->GetSkyLight(abovePos)));
 			if ((light > 4)  &&
