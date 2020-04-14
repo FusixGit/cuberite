@@ -48,6 +48,17 @@ class cBlockLeavesHandler:
 		a_Area.SetBlockType(a_BlockPos.x, a_BlockPos.y, a_BlockPos.z, E_BLOCK_SPONGE);
 		for (int i = 0; i < LEAVES_CHECK_DISTANCE; i++)
 		{
+			auto processNeighbor = [&a_Area, i](int cbx, int cby, int cbz) -> bool
+			{
+				switch (a_Area.GetBlockType(cbx, cby, cbz))
+				{
+					case E_BLOCK_LEAVES: a_Area.SetBlockType(cbx, cby, cbz, static_cast<BLOCKTYPE>(E_BLOCK_SPONGE + i + 1)); break;
+					case E_BLOCK_LOG: return true;
+					case E_BLOCK_NEW_LEAVES: a_Area.SetBlockType(cbx, cby, cbz, static_cast<BLOCKTYPE>(E_BLOCK_SPONGE + i + 1)); break;
+					case E_BLOCK_NEW_LOG: return true;
+				}
+				return false;
+			};
 			for (int y = std::max(a_BlockPos.y - i, 0); y <= std::min(a_BlockPos.y + i, cChunkDef::Height - 1); y++)
 			{
 				for (int z = a_BlockPos.z - i; z <= a_BlockPos.z + i; z++)
@@ -58,25 +69,17 @@ class cBlockLeavesHandler:
 						{
 							continue;
 						}
-						#define PROCESS_NEIGHBOR(x, y, z) \
-							do { \
-								switch (a_Area.GetBlockType(x, y, z)) \
-								{ \
-									case E_BLOCK_LEAVES: a_Area.SetBlockType(x, y, z, static_cast<BLOCKTYPE>(E_BLOCK_SPONGE + i + 1)); break; \
-									case E_BLOCK_LOG: return true; \
-									case E_BLOCK_NEW_LEAVES: a_Area.SetBlockType(x, y, z, static_cast<BLOCKTYPE>(E_BLOCK_SPONGE + i + 1)); break; \
-									case E_BLOCK_NEW_LOG: return true; \
-								} \
-							} while (false)
-
-						PROCESS_NEIGHBOR(x - 1, y,     z);
-						PROCESS_NEIGHBOR(x + 1, y,     z);
-						PROCESS_NEIGHBOR(x,     y,     z - 1);
-						PROCESS_NEIGHBOR(x,     y,     z + 1);
-						PROCESS_NEIGHBOR(x,     y + 1, z);
-						PROCESS_NEIGHBOR(x,     y - 1, z);
-
-						#undef PROCESS_NEIGHBOR
+						if (
+							processNeighbor(x - 1, y,     z) ||
+							processNeighbor(x + 1, y,     z) ||
+							processNeighbor(x,     y,     z - 1) ||
+							processNeighbor(x,     y,     z + 1) ||
+							processNeighbor(x,     y + 1, z) ||
+							processNeighbor(x,     y - 1, z)
+						)
+						{
+							return true;
+						}
 					}  // for x
 				}  // for z
 			}  // for y
